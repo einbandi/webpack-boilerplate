@@ -166,6 +166,59 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             })
             .attr('y', yScaleTop(0) + 26)
             .attr('text-anchor', 'middle')
+            .on('click', function (_d, i) {
+                // filter selection
+
+                const filtered = data.filter(MutationData.chromosomeLabels[i], '');
+
+                // update bars for types
+
+                svg.selectAll('.typeBars')
+                    .data(filtered.getTypeCounts())
+                    .transition()
+                    .duration(500)
+                    .attr('x', xScaleBottom(0))
+                    .attr('y', function (_d, i) {
+                        return <number>yScaleBottom(MutationData.typeLabels[i]);
+                    })
+                    .attr('width', function (d) {
+                        return xScaleBottom(d) - xScaleBottom(0);
+                    })
+                    .attr('height', yScaleBottom.bandwidth());
+
+                // update number labels for types
+
+                svg.selectAll('.typeCounts')
+                    .data(filtered.getTypeCounts())
+                    .text((d) => { return d; })
+                    .transition()
+                    .duration(500)
+                    .attr('x', function (d) {
+                        // let xPos: number;
+                        // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
+                        //     xPos = xScaleBottom(d) + 12;
+                        // } else {
+                        //     xPos = xScaleBottom(d) - 12;
+                        // }
+                        // return xPos;
+                        return xScaleBottom(d) + 12;
+                    })
+                    .attr('y', function (_d, i) {
+                        return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
+                    })
+                    .attr('fill', function () {
+                        // let fill: string;
+                        // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
+                        //     fill = 'grey';
+                        // } else {
+                        //     fill = 'white';
+                        // }
+                        // return fill;
+                        return 'grey';
+                    })
+                    .attr('font-size', '10px')
+                    .attr('text-anchor', 'start');
+            })
             .classed('chromLabels', true);
 
         // create bars for chromosomes
@@ -232,6 +285,59 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .attr('y', function (_d, i) {
                 return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
             })
+            .on('click', function (_d, i) {
+                // filter selection
+
+                const filtered = data.filter('', MutationData.typeLabels[i]);
+
+                // update bars for chromosomes
+
+                svg.selectAll('.chromBars')
+                    .data(filtered.getChromosomeCounts())
+                    .transition()
+                    .duration(500)
+                    .attr('x', function (_d, i) {
+                        return <number>xScaleTop(MutationData.chromosomeLabels[i]);
+                    })
+                    .attr('y', function (d) {
+                        return yScaleTop(d);
+                    })
+                    .attr('width', xScaleTop.bandwidth())
+                    .attr('height', function (d) {
+                        return yScaleTop(0) - yScaleTop(d);
+                    });
+
+                // update number labels for chromosomes
+
+                svg.selectAll('.chromCounts')
+                    .data(filtered.getChromosomeCounts())
+                    .transition()
+                    .duration(500)
+                    .text((d) => { return d; })
+                    .attr('x', function (_d, i) {
+                        return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
+                    })
+                    .attr('y', function (d) {
+                        let yPos: number;
+                        if (yScaleTop(0) - yScaleTop(d) < 20) {
+                            yPos = yScaleTop(d);
+                        } else {
+                            yPos = yScaleTop(d) + 16;
+                        }
+                        return yPos;
+                    })
+                    .attr('fill', function (d) {
+                        let fill: string;
+                        if (yScaleTop(0) - yScaleTop(d) < 20) {
+                            fill = 'grey';
+                        } else {
+                            fill = 'white';
+                        }
+                        return fill;
+                    })
+                    .attr('font-size', '10px')
+                    .attr('text-anchor', 'middle');
+            })
             .classed('typeLabels', true);
 
         // create bars for types
@@ -282,64 +388,8 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             })
             .attr('font-size', '10px')
             .attr('text-anchor', 'start')
-            .classed('chromCounts', true);
+            .classed('typeCounts', true);
 
-        d3.select('body')
-            .append('p')
-            .text('click here to filter by type 1')
-            .on('click', function () {
-                // filter selection
-
-                const filtered = data.filter('', MutationData.typeLabels[0]);
-
-                // create bars for chromosomes
-
-                svg.selectAll('.chromBars')
-                    .data(filtered.getChromosomeCounts())
-                    .transition()
-                    .duration(500)
-                    .attr('x', function (_d, i) {
-                        return <number>xScaleTop(MutationData.chromosomeLabels[i]);
-                    })
-                    .attr('y', function (d) {
-                        return yScaleTop(d);
-                    })
-                    .attr('width', xScaleTop.bandwidth())
-                    .attr('height', function (d) {
-                        return yScaleTop(0) - yScaleTop(d);
-                    });
-
-                // create number labels for chromosomes
-
-                svg.selectAll('.chromCounts')
-                    .data(filtered.getChromosomeCounts())
-                    .transition()
-                    .duration(500)
-                    .text((d) => { return d; })
-                    .attr('x', function (_d, i) {
-                        return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
-                    })
-                    .attr('y', function (d) {
-                        let yPos: number;
-                        if (yScaleTop(0) - yScaleTop(d) < 20) {
-                            yPos = yScaleTop(d);
-                        } else {
-                            yPos = yScaleTop(d) + 16;
-                        }
-                        return yPos;
-                    })
-                    .attr('fill', function (d) {
-                        let fill: string;
-                        if (yScaleTop(0) - yScaleTop(d) < 20) {
-                            fill = 'grey';
-                        } else {
-                            fill = 'white';
-                        }
-                        return fill;
-                    })
-                    .attr('font-size', '10px')
-                    .attr('text-anchor', 'middle');
-            });
     })
     .catch(function () {
         console.log('Error: could not load data!');
