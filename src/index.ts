@@ -119,8 +119,8 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
         const width: number = 960 - margin.left - margin.right;
         const height: number = 600 - margin.top - margin.bottom;
 
-        // let chromSelection: string = '';
-        // let typeSelection: string = '';
+        let chromosomeSelection: string = '';
+        let typeSelection: string = '';
 
         const svg = d3.select('body')
             .append('svg')
@@ -152,6 +152,173 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .rangeRound([height * 3 / 4 + 60, height])
             .paddingInner(0.3);
 
+        // function for drawing/updating chromosome bars
+
+        let chromosomesFirstDrawn: boolean = true;
+
+        const drawChromosomeBars = function (mData: MutationData): void {
+            let transitionDuration: number;
+
+            if (chromosomesFirstDrawn) {
+                transitionDuration = 0;
+            } else {
+                transitionDuration = 500;
+            }
+
+            const bars = svg.selectAll('.chromBars')
+                .data(mData.getChromosomeCounts());
+
+            console.log(bars.size());
+
+            bars
+                .enter()
+                .append('rect')
+                .classed('chromBars', true)
+                .merge(<d3.Selection<SVGRectElement, number, SVGGElement, {}>><unknown>bars)
+                .transition()
+                .duration(transitionDuration)
+                .attr('x', function (_d, i) {
+                    return <number>xScaleTop(MutationData.chromosomeLabels[i]);
+                })
+                .attr('y', function (d) {
+                    return yScaleTop(d);
+                })
+                .attr('width', xScaleTop.bandwidth())
+                .attr('height', function (d) {
+                    return yScaleTop(0) - yScaleTop(d);
+                });
+        };
+
+        // function for drawing/updating chromosome count labels
+
+        const drawChromosomeCounts = function (mData: MutationData): void {
+            let transitionDuration: number;
+
+            if (chromosomesFirstDrawn) {
+                transitionDuration = 0;
+            } else {
+                transitionDuration = 500;
+            }
+
+            const labels = svg.selectAll('.chromCounts')
+                .data(mData.getChromosomeCounts());
+
+            labels.enter()
+                .append('text')
+                .classed('chromCounts', true)
+                .merge(<d3.Selection<SVGTextElement, number, SVGGElement, {}>><unknown>labels)
+                .transition()
+                .duration(transitionDuration)
+                .text((d) => { return d; })
+                .attr('x', function (_d, i) {
+                    return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
+                })
+                .attr('y', function (d) {
+                    let yPos: number;
+                    if (yScaleTop(0) - yScaleTop(d) < 20) {
+                        yPos = yScaleTop(d) - 6;
+                    } else {
+                        yPos = yScaleTop(d) + 16;
+                    }
+                    return yPos;
+                })
+                .attr('fill', function (d) {
+                    let fill: string;
+                    if (yScaleTop(0) - yScaleTop(d) < 20) {
+                        fill = 'grey';
+                    } else {
+                        fill = 'white';
+                    }
+                    return fill;
+                })
+                .attr('font-size', '10px')
+                .attr('text-anchor', 'middle');
+        };
+
+        // function for drawing/updating type bars
+
+        let typesFirstDrawn: boolean = true;
+
+        const drawTypeBars = function (mData: MutationData): void {
+            let transitionDuration: number;
+
+            if (typesFirstDrawn) {
+                transitionDuration = 0;
+            } else {
+                transitionDuration = 500;
+            }
+
+            const bars = svg.selectAll('.typeBars')
+                .data(mData.getTypeCounts());
+
+            console.log(bars.size());
+
+            bars
+                .enter()
+                .append('rect')
+                .classed('typeBars', true)
+                .merge(<d3.Selection<SVGRectElement, number, SVGGElement, {}>><unknown>bars)
+                .transition()
+                .duration(transitionDuration)
+                .attr('x', xScaleBottom(0))
+                .attr('y', function (_d, i) {
+                    return <number>yScaleBottom(MutationData.typeLabels[i]);
+                })
+                .attr('width', function (d) {
+                    return xScaleBottom(d) - xScaleBottom(0);
+                })
+                .attr('height', yScaleBottom.bandwidth());
+        };
+
+        // function for drawing/updating type count labels
+
+        const drawTypeCounts = function (mData: MutationData): void {
+            let transitionDuration: number;
+
+            if (typesFirstDrawn) {
+                transitionDuration = 0;
+            } else {
+                transitionDuration = 500;
+            }
+
+            const labels = svg.selectAll('.typeCounts')
+                .data(mData.getTypeCounts());
+
+            labels
+                .enter()
+                .append('text')
+                .classed('typeCounts', true)
+                .merge(<d3.Selection<SVGTextElement, number, SVGGElement, {}>><unknown>labels)
+                .transition()
+                .duration(transitionDuration)
+                .text((d) => { return d; })
+                .attr('x', function (d) {
+                    // let xPos: number;
+                    // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
+                    //     xPos = xScaleBottom(d) + 12;
+                    // } else {
+                    //     xPos = xScaleBottom(d) - 12;
+                    // }
+                    // return xPos;
+                    return xScaleBottom(d) + 12;
+                })
+                .attr('y', function (_d, i) {
+                    return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
+                })
+                .attr('fill', function () {
+                    // let fill: string;
+                    // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
+                    //     fill = 'grey';
+                    // } else {
+                    //     fill = 'white';
+                    // }
+                    // return fill;
+                    return 'grey';
+                })
+                .attr('font-size', '10px')
+                .attr('text-anchor', 'start');
+        };
+
         // create chromosome labels
 
         svg.selectAll('.chromLabels')
@@ -169,107 +336,30 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .on('click', function (_d, i) {
                 // filter selection
 
-                const filtered = data.filter(MutationData.chromosomeLabels[i], '');
+                chromosomeSelection = MutationData.chromosomeLabels[i];
 
-                // update bars for types
+                const filtered = data.filter(chromosomeSelection, typeSelection);
 
-                svg.selectAll('.typeBars')
-                    .data(filtered.getTypeCounts())
-                    .transition()
-                    .duration(500)
-                    .attr('x', xScaleBottom(0))
-                    .attr('y', function (_d, i) {
-                        return <number>yScaleBottom(MutationData.typeLabels[i]);
-                    })
-                    .attr('width', function (d) {
-                        return xScaleBottom(d) - xScaleBottom(0);
-                    })
-                    .attr('height', yScaleBottom.bandwidth());
+                // update bars and count labels
 
-                // update number labels for types
+                drawChromosomeBars(filtered);
+                drawChromosomeCounts(filtered);
+                drawTypeBars(filtered);
+                drawTypeCounts(filtered);
 
-                svg.selectAll('.typeCounts')
-                    .data(filtered.getTypeCounts())
-                    .text((d) => { return d; })
-                    .transition()
-                    .duration(500)
-                    .attr('x', function (d) {
-                        // let xPos: number;
-                        // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
-                        //     xPos = xScaleBottom(d) + 12;
-                        // } else {
-                        //     xPos = xScaleBottom(d) - 12;
-                        // }
-                        // return xPos;
-                        return xScaleBottom(d) + 12;
-                    })
-                    .attr('y', function (_d, i) {
-                        return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
-                    })
-                    .attr('fill', function () {
-                        // let fill: string;
-                        // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
-                        //     fill = 'grey';
-                        // } else {
-                        //     fill = 'white';
-                        // }
-                        // return fill;
-                        return 'grey';
-                    })
-                    .attr('font-size', '10px')
-                    .attr('text-anchor', 'start');
+                // color all labels black, then color current selection red
+
+                svg.selectAll('.chromLabels')
+                    .attr('fill', 'black');
+                d3.select(this).attr('fill', 'red');
             })
             .classed('chromLabels', true);
 
-        // create bars for chromosomes
+        // create bars and count labels for chromosomes
 
-        svg.selectAll('.chromBars')
-            .data(data.getChromosomeCounts())
-            .enter()
-            .append('rect')
-            .attr('x', function (_d, i) {
-                return <number>xScaleTop(MutationData.chromosomeLabels[i]);
-            })
-            .attr('y', function (d) {
-                return yScaleTop(d);
-            })
-            .attr('width', xScaleTop.bandwidth())
-            .attr('height', function (d) {
-                return yScaleTop(0) - yScaleTop(d);
-            })
-            .classed('chromBars', true);
-
-        // create number labels for chromosomes
-
-        svg.selectAll('.chromCounts')
-            .data(data.getChromosomeCounts())
-            .enter()
-            .append('text')
-            .text((d) => { return d; })
-            .attr('x', function (_d, i) {
-                return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
-            })
-            .attr('y', function (d) {
-                let yPos: number;
-                if (yScaleTop(0) - yScaleTop(d) < 20) {
-                    yPos = yScaleTop(d) - 6;
-                } else {
-                    yPos = yScaleTop(d) + 16;
-                }
-                return yPos;
-            })
-            .attr('fill', function (d) {
-                let fill: string;
-                if (yScaleTop(0) - yScaleTop(d) < 20) {
-                    fill = 'grey';
-                } else {
-                    fill = 'white';
-                }
-                return fill;
-            })
-            .attr('font-size', '10px')
-            .attr('text-anchor', 'middle')
-            .classed('chromCounts', true);
+        drawChromosomeBars(data);
+        drawChromosomeCounts(data);
+        chromosomesFirstDrawn = false;
 
         // create type labels
 
@@ -288,107 +378,32 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .on('click', function (_d, i) {
                 // filter selection
 
-                const filtered = data.filter('', MutationData.typeLabels[i]);
+                typeSelection = MutationData.typeLabels[i];
 
-                // update bars for chromosomes
+                const filtered = data.filter(chromosomeSelection, typeSelection);
 
-                svg.selectAll('.chromBars')
-                    .data(filtered.getChromosomeCounts())
-                    .transition()
-                    .duration(500)
-                    .attr('x', function (_d, i) {
-                        return <number>xScaleTop(MutationData.chromosomeLabels[i]);
-                    })
-                    .attr('y', function (d) {
-                        return yScaleTop(d);
-                    })
-                    .attr('width', xScaleTop.bandwidth())
-                    .attr('height', function (d) {
-                        return yScaleTop(0) - yScaleTop(d);
-                    });
+                // update bars and count labels
 
-                // update number labels for chromosomes
+                drawChromosomeBars(filtered);
+                drawChromosomeCounts(filtered);
+                drawTypeBars(filtered);
+                drawTypeCounts(filtered);
 
-                svg.selectAll('.chromCounts')
-                    .data(filtered.getChromosomeCounts())
-                    .transition()
-                    .duration(500)
-                    .text((d) => { return d; })
-                    .attr('x', function (_d, i) {
-                        return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
-                    })
-                    .attr('y', function (d) {
-                        let yPos: number;
-                        if (yScaleTop(0) - yScaleTop(d) < 20) {
-                            yPos = yScaleTop(d);
-                        } else {
-                            yPos = yScaleTop(d) + 16;
-                        }
-                        return yPos;
-                    })
-                    .attr('fill', function (d) {
-                        let fill: string;
-                        if (yScaleTop(0) - yScaleTop(d) < 20) {
-                            fill = 'grey';
-                        } else {
-                            fill = 'white';
-                        }
-                        return fill;
-                    })
-                    .attr('font-size', '10px')
-                    .attr('text-anchor', 'middle');
+                // color all labels black, then color current selection red
+
+                svg.selectAll('.typeLabels')
+                    .attr('fill', 'black');
+                d3.select(this).attr('fill', 'red');
             })
             .classed('typeLabels', true);
 
-        // create bars for types
+        // create bars and count labels for types
 
-        svg.selectAll('.typeBars')
-            .data(data.getTypeCounts())
-            .enter()
-            .append('rect')
-            .attr('x', xScaleBottom(0))
-            .attr('y', function (_d, i) {
-                return <number>yScaleBottom(MutationData.typeLabels[i]);
-            })
-            .attr('width', function (d) {
-                return xScaleBottom(d) - xScaleBottom(0);
-            })
-            .attr('height', yScaleBottom.bandwidth())
-            .classed('typeBars', true);
+        drawTypeBars(data);
+        drawTypeCounts(data);
+        typesFirstDrawn = false;
 
-        // create number labels for types
-
-        svg.selectAll('.typeCounts')
-            .data(data.getTypeCounts())
-            .enter()
-            .append('text')
-            .text((d) => { return d; })
-            .attr('x', function (d) {
-                // let xPos: number;
-                // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
-                //     xPos = xScaleBottom(d) + 12;
-                // } else {
-                //     xPos = xScaleBottom(d) - 12;
-                // }
-                // return xPos;
-                return xScaleBottom(d) + 12;
-            })
-            .attr('y', function (_d, i) {
-                return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
-            })
-            .attr('fill', function () {
-                // let fill: string;
-                // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
-                //     fill = 'grey';
-                // } else {
-                //     fill = 'white';
-                // }
-                // return fill;
-                return 'grey';
-            })
-            .attr('font-size', '10px')
-            .attr('text-anchor', 'start')
-            .classed('typeCounts', true);
+        // TODO: add clear buttons
 
     })
     .catch(function () {
