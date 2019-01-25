@@ -168,10 +168,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             const bars = svg.selectAll('.chromBars')
                 .data(mData.getChromosomeCounts());
 
-            console.log(bars.size());
-
-            bars
-                .enter()
+            bars.enter()
                 .append('rect')
                 .classed('chromBars', true)
                 .merge(<d3.Selection<SVGRectElement, number, SVGGElement, {}>><unknown>bars)
@@ -251,10 +248,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             const bars = svg.selectAll('.typeBars')
                 .data(mData.getTypeCounts());
 
-            console.log(bars.size());
-
-            bars
-                .enter()
+            bars.enter()
                 .append('rect')
                 .classed('typeBars', true)
                 .merge(<d3.Selection<SVGRectElement, number, SVGGElement, {}>><unknown>bars)
@@ -284,8 +278,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             const labels = svg.selectAll('.typeCounts')
                 .data(mData.getTypeCounts());
 
-            labels
-                .enter()
+            labels.enter()
                 .append('text')
                 .classed('typeCounts', true)
                 .merge(<d3.Selection<SVGTextElement, number, SVGGElement, {}>><unknown>labels)
@@ -403,7 +396,60 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
         drawTypeCounts(data);
         typesFirstDrawn = false;
 
-        // TODO: add clear buttons
+        const buttonDiv = d3.select('body')
+            .append('div');
+
+        buttonDiv.append('button')
+            .style('margin-right', '10px')
+            .html('Clear chromosome selection')
+            .on('click', function () {
+                chromosomeSelection = '';
+
+                const filtered = data.filter(chromosomeSelection, typeSelection);
+
+                drawChromosomeBars(filtered);
+                drawChromosomeCounts(filtered);
+                drawTypeBars(filtered);
+                drawTypeCounts(filtered);
+
+                svg.selectAll('.chromLabels')
+                    .attr('fill', 'black');
+            });
+
+        buttonDiv.append('button')
+            .style('margin-right', '10px')
+            .html('Clear type selection')
+            .on('click', function () {
+                typeSelection = '';
+
+                const filtered = data.filter(chromosomeSelection, typeSelection);
+
+                drawChromosomeBars(filtered);
+                drawChromosomeCounts(filtered);
+                drawTypeBars(filtered);
+                drawTypeCounts(filtered);
+
+                svg.selectAll('.typeLabels')
+                    .attr('fill', 'black');
+            });
+
+        buttonDiv.append('button')
+            .style('margin-right', '10px')
+            .html('Clear all')
+            .on('click', function () {
+                chromosomeSelection = '';
+                typeSelection = '';
+
+                const filtered = data.filter(chromosomeSelection, typeSelection);
+
+                drawChromosomeBars(filtered);
+                drawChromosomeCounts(filtered);
+                drawTypeBars(filtered);
+                drawTypeCounts(filtered);
+
+                svg.selectAll('.chromLabels, .typeLabels')
+                    .attr('fill', 'black');
+            });
 
     })
     .catch(function () {
