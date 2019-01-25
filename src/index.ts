@@ -1,14 +1,11 @@
 // import { SimpleComponent } from './components/SimpleComponent';
 import './assets/scss/style.scss';
-import * as d3 from 'd3';
+// import { json } from 'd3-fetch';
+// import { select, Selection } from 'd3-selection';
+// import { scaleLinear, scaleBand } from 'd3-scale';
+// import { max } from 'd3-array';
 
-// d3.select("body")
-//     .append("svg")
-//     .attr("width", 500)
-//     .attr("height", 200)
-//     .append("rect")
-//     .attr("width", 300)
-//     .attr("height", 100);
+import * as d3 from 'd3';
 
 interface IMutationItem {
     chromosome: string;
@@ -152,14 +149,16 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .rangeRound([height * 3 / 4 + 60, height])
             .paddingInner(0.3);
 
-        // function for drawing/updating chromosome bars
+        // switch for setting transition after first plotting
 
-        let chromosomesFirstDrawn: boolean = true;
+        let firstDrawn: boolean = true;
+
+        // function for drawing/updating chromosome bars
 
         const drawChromosomeBars = function (mData: MutationData): void {
             let transitionDuration: number;
 
-            if (chromosomesFirstDrawn) {
+            if (firstDrawn) {
                 transitionDuration = 0;
             } else {
                 transitionDuration = 500;
@@ -174,16 +173,12 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
                 .merge(<d3.Selection<SVGRectElement, number, SVGGElement, {}>><unknown>bars)
                 .transition()
                 .duration(transitionDuration)
-                .attr('x', function (_d, i) {
-                    return <number>xScaleTop(MutationData.chromosomeLabels[i]);
-                })
-                .attr('y', function (d) {
-                    return yScaleTop(d);
-                })
+                .attr('x', (_d, i) =>
+                    <number>xScaleTop(MutationData.chromosomeLabels[i]))
+                .attr('y', (d) => yScaleTop(d))
                 .attr('width', xScaleTop.bandwidth())
-                .attr('height', function (d) {
-                    return yScaleTop(0) - yScaleTop(d);
-                });
+                .attr('height', (d) => yScaleTop(0) - yScaleTop(d))
+                ;
         };
 
         // function for drawing/updating chromosome count labels
@@ -191,7 +186,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
         const drawChromosomeCounts = function (mData: MutationData): void {
             let transitionDuration: number;
 
-            if (chromosomesFirstDrawn) {
+            if (firstDrawn) {
                 transitionDuration = 0;
             } else {
                 transitionDuration = 500;
@@ -206,40 +201,25 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
                 .merge(<d3.Selection<SVGTextElement, number, SVGGElement, {}>><unknown>labels)
                 .transition()
                 .duration(transitionDuration)
-                .text((d) => { return d; })
-                .attr('x', function (_d, i) {
-                    return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
-                })
-                .attr('y', function (d) {
-                    let yPos: number;
-                    if (yScaleTop(0) - yScaleTop(d) < 20) {
-                        yPos = yScaleTop(d) - 6;
-                    } else {
-                        yPos = yScaleTop(d) + 16;
-                    }
-                    return yPos;
-                })
-                .attr('fill', function (d) {
-                    let fill: string;
-                    if (yScaleTop(0) - yScaleTop(d) < 20) {
-                        fill = 'grey';
-                    } else {
-                        fill = 'white';
-                    }
-                    return fill;
-                })
+                .text((d) => d)
+                .attr('x', (_d, i) =>
+                    <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2)
                 .attr('font-size', '10px')
-                .attr('text-anchor', 'middle');
+                .attr('text-anchor', 'middle')
+                .attr('y', (d) => yScaleTop(d) + 16)
+                .attr('fill', 'white')
+                .filter((d) => yScaleTop(0) - yScaleTop(d) < 20)
+                .attr('y', (d) => yScaleTop(d) - 6)
+                .attr('fill', 'grey')
+                ;
         };
 
         // function for drawing/updating type bars
 
-        let typesFirstDrawn: boolean = true;
-
         const drawTypeBars = function (mData: MutationData): void {
             let transitionDuration: number;
 
-            if (typesFirstDrawn) {
+            if (firstDrawn) {
                 transitionDuration = 0;
             } else {
                 transitionDuration = 500;
@@ -255,13 +235,12 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
                 .transition()
                 .duration(transitionDuration)
                 .attr('x', xScaleBottom(0))
-                .attr('y', function (_d, i) {
-                    return <number>yScaleBottom(MutationData.typeLabels[i]);
-                })
-                .attr('width', function (d) {
-                    return xScaleBottom(d) - xScaleBottom(0);
-                })
-                .attr('height', yScaleBottom.bandwidth());
+                .attr('y', (_d, i) =>
+                    <number>yScaleBottom(MutationData.typeLabels[i]))
+                .attr('width', (d) =>
+                    xScaleBottom(d) - xScaleBottom(0))
+                .attr('height', yScaleBottom.bandwidth())
+                ;
         };
 
         // function for drawing/updating type count labels
@@ -269,7 +248,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
         const drawTypeCounts = function (mData: MutationData): void {
             let transitionDuration: number;
 
-            if (typesFirstDrawn) {
+            if (firstDrawn) {
                 transitionDuration = 0;
             } else {
                 transitionDuration = 500;
@@ -285,31 +264,26 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
                 .transition()
                 .duration(transitionDuration)
                 .text((d) => { return d; })
-                .attr('x', function (d) {
-                    // let xPos: number;
-                    // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
-                    //     xPos = xScaleBottom(d) + 12;
-                    // } else {
-                    //     xPos = xScaleBottom(d) - 12;
-                    // }
-                    // return xPos;
-                    return xScaleBottom(d) + 12;
-                })
-                .attr('y', function (_d, i) {
-                    return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
-                })
-                .attr('fill', function () {
-                    // let fill: string;
-                    // if (xScaleBottom(d) - xScaleBottom(0) < 20) {
-                    //     fill = 'grey';
-                    // } else {
-                    //     fill = 'white';
-                    // }
-                    // return fill;
-                    return 'grey';
-                })
                 .attr('font-size', '10px')
-                .attr('text-anchor', 'start');
+                .attr('y', (_d, i) =>
+                    <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3)
+                .attr('text-anchor', 'start')
+                .attr('x', (d) => xScaleBottom(d) + 12)
+                .attr('fill', 'grey')
+                // .filter((d) => xScaleBottom(d) - xScaleBottom(0) >= 20)
+                // .attr('text-anchor', 'end')
+                // .attr('x', (d) => xScaleBottom(d) - 12)
+                // .attr('fill', 'white')
+                ;
+        };
+
+        const updateView = function (mData: MutationData): void {
+            drawChromosomeBars(mData);
+            drawChromosomeCounts(mData);
+            drawTypeBars(mData);
+            drawTypeCounts(mData);
+
+            firstDrawn = false;
         };
 
         // create chromosome labels
@@ -318,12 +292,9 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .data(data.getChromosomeCounts())
             .enter()
             .append('text')
-            .text(function (_d, i) {
-                return MutationData.chromosomeLabels[i];
-            })
-            .attr('x', function (_d, i) {
-                return <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2;
-            })
+            .text((_d, i) => MutationData.chromosomeLabels[i])
+            .attr('x', (_d, i) =>
+                <number>xScaleTop(MutationData.chromosomeLabels[i]) + xScaleTop.bandwidth() / 2)
             .attr('y', yScaleTop(0) + 26)
             .attr('text-anchor', 'middle')
             .on('click', function (_d, i) {
@@ -335,10 +306,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
 
                 // update bars and count labels
 
-                drawChromosomeBars(filtered);
-                drawChromosomeCounts(filtered);
-                drawTypeBars(filtered);
-                drawTypeCounts(filtered);
+                updateView(filtered);
 
                 // color all labels black, then color current selection red
 
@@ -346,13 +314,8 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
                     .attr('fill', 'black');
                 d3.select(this).attr('fill', 'red');
             })
-            .classed('chromLabels', true);
-
-        // create bars and count labels for chromosomes
-
-        drawChromosomeBars(data);
-        drawChromosomeCounts(data);
-        chromosomesFirstDrawn = false;
+            .classed('chromLabels', true)
+            ;
 
         // create type labels
 
@@ -360,14 +323,12 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
             .data(data.getTypeCounts())
             .enter()
             .append('text')
-            .text(function (_d, i) { // shorten label for 'mutliple ...' type
-                return MutationData.typeLabels[i].replace('(>=2bp and <=200bp)', '');
-            })
+            .text((_d, i) =>
+                MutationData.typeLabels[i].replace('(>=2bp and <=200bp)', ''))
             .attr('text-anchor', 'end')
             .attr('x', xScaleBottom(0) - 20)
-            .attr('y', function (_d, i) {
-                return <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3;
-            })
+            .attr('y', (_d, i) =>
+                <number>yScaleBottom(MutationData.typeLabels[i]) + yScaleBottom.bandwidth() / 2 + 3)
             .on('click', function (_d, i) {
                 // filter selection
 
@@ -377,10 +338,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
 
                 // update bars and count labels
 
-                drawChromosomeBars(filtered);
-                drawChromosomeCounts(filtered);
-                drawTypeBars(filtered);
-                drawTypeCounts(filtered);
+                updateView(filtered);
 
                 // color all labels black, then color current selection red
 
@@ -388,13 +346,14 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
                     .attr('fill', 'black');
                 d3.select(this).attr('fill', 'red');
             })
-            .classed('typeLabels', true);
+            .classed('typeLabels', true)
+            ;
 
-        // create bars and count labels for types
+        // create all bars and count labels
 
-        drawTypeBars(data);
-        drawTypeCounts(data);
-        typesFirstDrawn = false;
+        updateView(data);
+
+        // create 'clear' buttons
 
         const buttonDiv = d3.select('body')
             .append('div');
@@ -407,10 +366,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
 
                 const filtered = data.filter(chromosomeSelection, typeSelection);
 
-                drawChromosomeBars(filtered);
-                drawChromosomeCounts(filtered);
-                drawTypeBars(filtered);
-                drawTypeCounts(filtered);
+                updateView(filtered);
 
                 svg.selectAll('.chromLabels')
                     .attr('fill', 'black');
@@ -424,10 +380,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
 
                 const filtered = data.filter(chromosomeSelection, typeSelection);
 
-                drawChromosomeBars(filtered);
-                drawChromosomeCounts(filtered);
-                drawTypeBars(filtered);
-                drawTypeCounts(filtered);
+                updateView(filtered);
 
                 svg.selectAll('.typeLabels')
                     .attr('fill', 'black');
@@ -442,10 +395,7 @@ d3.json('https://dcc.icgc.org/api/v1/projects/GBM-US/mutations?field=id,mutation
 
                 const filtered = data.filter(chromosomeSelection, typeSelection);
 
-                drawChromosomeBars(filtered);
-                drawChromosomeCounts(filtered);
-                drawTypeBars(filtered);
-                drawTypeCounts(filtered);
+                updateView(filtered);
 
                 svg.selectAll('.chromLabels, .typeLabels')
                     .attr('fill', 'black');
